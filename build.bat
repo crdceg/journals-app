@@ -38,6 +38,8 @@ IF EXIST output (
     xcopy output dist\app\output /E /I /Y
 )
 
+copy reviewers_master.xlsx dist\app\
+
 echo =========================
 echo DONE SUCCESSFULLY ✅
 echo =========================

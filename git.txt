@@ -19,10 +19,17 @@
 
 ### 4. بعد ما يتعمل
 
-
 git init
 git add .
 git commit -m "Initial commit"
 git branch -M main
 git remote add origin https://github.com/crdceg/journals-app.git
 git push -u origin main
+
+
+
+### 5. بعد أي تعديل
+
+git add .
+git commit -m "وصف التعديل"
+git push

@@ -17,6 +17,19 @@ from PySide6.QtCore import Qt
 
 # ====== إعدادات ======
 
+def load_reviewers():
+    file_path = resource_path("reviewers_master.xlsx")
+
+    if not os.path.exists(file_path):
+        return []
+
+    df = pd.read_excel(file_path, dtype=str)
+
+    if "FULL_NAME" not in df.columns:
+        return []
+
+    return df["FULL_NAME"].dropna().tolist()
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -41,6 +54,8 @@ ISSUES = ["يناير", "أبريل", "يوليو", "أكتوبر"]
 
 MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
           "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
+
+REVIEWERS = load_reviewers()
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -79,6 +94,19 @@ def format_excel(file_path):
     wb.save(file_path)
 
 # ====== وظائف ======
+
+def load_reviewers():
+    file_path = resource_path("reviewers_master.xlsx")
+
+    if not os.path.exists(file_path):
+        return []
+
+    df = pd.read_excel(file_path, dtype=str)
+
+    if "FULL_NAME" not in df.columns:
+        return []
+
+    return df["FULL_NAME"].dropna().tolist()
 
 def replace_placeholders(doc, mapping):
     for p in doc.paragraphs:
@@ -214,6 +242,30 @@ class EditForm(QWidget):
             self.issue_year.setCurrentText(issue_year)
         except:
             pass
+        
+        # ===== تحميل المحكمين =====
+        
+        self.reviewer1 = QComboBox()
+        self.reviewer1.addItems(REVIEWERS)
+        reviewer1 = record.get("REVIEWER1", "")
+        if pd.isna(reviewer1):
+            reviewer1 = ""
+
+        self.reviewer1.setCurrentText(str(reviewer1))
+
+        self.reviewer2 = QComboBox()
+        self.reviewer2.addItems(REVIEWERS)
+        reviewer2 = record.get("REVIEWER2", "")
+        if pd.isna(reviewer2):
+            reviewer2 = ""
+
+        self.reviewer2.setCurrentText(str(reviewer2))
+
+        layout.addWidget(QLabel("المحكم الأول"))
+        layout.addWidget(self.reviewer1)
+
+        layout.addWidget(QLabel("المحكم الثاني"))
+        layout.addWidget(self.reviewer2)
 
         # ===== زر الحفظ =====
         save_btn = QPushButton("حفظ + إعادة إصدار")
@@ -247,6 +299,8 @@ class EditForm(QWidget):
         df.loc[df["SERIAL"] == serial, "TITLE"] = title
         df.loc[df["SERIAL"] == serial, "ACCEPT_DATE"] = accept_date
         df.loc[df["SERIAL"] == serial, "ISSUE"] = issue_full
+        df.loc[df["SERIAL"] == serial, "REVIEWER1"] = self.reviewer1.currentText()
+        df.loc[df["SERIAL"] == serial, "REVIEWER2"] = self.reviewer2.currentText()
 
         df.to_excel(self.file_path, index=False)
         format_excel(self.file_path)
@@ -437,6 +491,21 @@ class App(QWidget):
 
         layout.addWidget(QLabel("العدد"))
         layout.addLayout(issue_layout)
+        
+        
+        # ===== المحكمين =====
+        self.reviewer1 = QComboBox()
+        self.reviewer1.addItems(REVIEWERS)
+
+        self.reviewer2 = QComboBox()
+        self.reviewer2.addItems(REVIEWERS)
+
+        layout.addWidget(QLabel("المحكم الأول"))
+        layout.addWidget(self.reviewer1)
+
+        layout.addWidget(QLabel("المحكم الثاني"))
+        layout.addWidget(self.reviewer2)
+        
 
         # ===== الأزرار =====
         btn_generate = QPushButton("إصدار")
@@ -486,8 +555,9 @@ class App(QWidget):
             "TITLE": title,
             "ACCEPT_DATE": accept_date,
             "ISSUE": issue_full,
+            "REVIEWER1": self.reviewer1.currentText(),
+            "REVIEWER2": self.reviewer2.currentText(),
         }
-
         doc_data = {
             "{{SERIAL}}": serial,
             "{{NAME}}": name,
@@ -504,6 +574,8 @@ class App(QWidget):
 
         self.name.clear()
         self.title.clear()
+        self.reviewer1.clear()
+        self.reviewer2.clear()
 
     def open_search(self):
         self.search_window = SearchWindow()
