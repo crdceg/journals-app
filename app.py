@@ -18,14 +18,19 @@ from PySide6.QtCore import Qt
 # ====== إعدادات ======
 
 def load_reviewers():
-    file_path = resource_path("reviewers_master.xlsx")
+    # جرب يقرأ من نفس فولدر exe الأول
+    base_path = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
+
+    file_path = os.path.join(base_path, "reviewers_master.xlsx")
 
     if not os.path.exists(file_path):
+        print("Reviewers file NOT FOUND:", file_path)
         return []
 
     df = pd.read_excel(file_path, dtype=str)
 
     if "FULL_NAME" not in df.columns:
+        print("FULL_NAME column NOT FOUND")
         return []
 
     return df["FULL_NAME"].dropna().tolist()
@@ -55,7 +60,7 @@ ISSUES = ["يناير", "أبريل", "يوليو", "أكتوبر"]
 MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
           "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
 
-REVIEWERS = load_reviewers()
+
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -94,19 +99,6 @@ def format_excel(file_path):
     wb.save(file_path)
 
 # ====== وظائف ======
-
-def load_reviewers():
-    file_path = resource_path("reviewers_master.xlsx")
-
-    if not os.path.exists(file_path):
-        return []
-
-    df = pd.read_excel(file_path, dtype=str)
-
-    if "FULL_NAME" not in df.columns:
-        return []
-
-    return df["FULL_NAME"].dropna().tolist()
 
 def replace_placeholders(doc, mapping):
     for p in doc.paragraphs:
@@ -161,7 +153,13 @@ def save_to_excel(journal, data):
     format_excel(file_path)
 
 def generate_doc(data):
-    doc = Document(TEMPLATE)
+    template_path = os.path.join(os.getcwd(), "templates", "template.docx")
+
+    if not os.path.exists(template_path):
+        QMessageBox.critical(None, "خطأ", f"Template not found:\n{template_path}")
+        return
+
+    doc = Document(template_path)
     replace_placeholders(doc, data)
 
     filename = f"{data['{{SERIAL}}']} - {data['{{NAME}}']}.docx"
@@ -245,21 +243,29 @@ class EditForm(QWidget):
         
         # ===== تحميل المحكمين =====
         
+        reviewers_list = load_reviewers()
+
         self.reviewer1 = QComboBox()
-        self.reviewer1.addItems(REVIEWERS)
+        self.reviewer1.addItem("")  # قيمة فاضية
+        self.reviewer1.addItems(reviewers_list)
+
         reviewer1 = record.get("REVIEWER1", "")
         if pd.isna(reviewer1):
             reviewer1 = ""
 
         self.reviewer1.setCurrentText(str(reviewer1))
 
+
         self.reviewer2 = QComboBox()
-        self.reviewer2.addItems(REVIEWERS)
+        self.reviewer2.addItem("")
+        self.reviewer2.addItems(reviewers_list)
+
         reviewer2 = record.get("REVIEWER2", "")
         if pd.isna(reviewer2):
             reviewer2 = ""
 
         self.reviewer2.setCurrentText(str(reviewer2))
+
 
         layout.addWidget(QLabel("المحكم الأول"))
         layout.addWidget(self.reviewer1)
@@ -493,12 +499,16 @@ class App(QWidget):
         layout.addLayout(issue_layout)
         
         
-        # ===== المحكمين =====
+       # ===== المحكمين =====
+        reviewers_list = load_reviewers()
+
         self.reviewer1 = QComboBox()
-        self.reviewer1.addItems(REVIEWERS)
+        self.reviewer1.addItem("")  # قيمة فاضية
+        self.reviewer1.addItems(reviewers_list)
 
         self.reviewer2 = QComboBox()
-        self.reviewer2.addItems(REVIEWERS)
+        self.reviewer2.addItem("")
+        self.reviewer2.addItems(reviewers_list)
 
         layout.addWidget(QLabel("المحكم الأول"))
         layout.addWidget(self.reviewer1)

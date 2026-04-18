@@ -24,21 +24,41 @@ echo =========================
 echo Building EXE...
 echo =========================
 
-pyinstaller --onedir --noconsole --add-data "templates;templates" app.py
+pyinstaller --onedir --noconsole app.py
 
 echo =========================
-echo Copying runtime data...
+echo Preparing runtime folders...
 echo =========================
 
+IF NOT EXIST dist\app mkdir dist\app
+
+echo Copying templates...
+IF EXIST templates (
+    xcopy templates dist\app\templates /E /I /Y
+) ELSE (
+    echo ERROR: templates folder not found!
+)
+
+echo Copying databases...
 IF EXIST databases (
     xcopy databases dist\app\databases /E /I /Y
+) ELSE (
+    echo WARNING: databases folder not found!
 )
 
+echo Copying output...
 IF EXIST output (
     xcopy output dist\app\output /E /I /Y
+) ELSE (
+    mkdir dist\app\output
 )
 
-copy reviewers_master.xlsx dist\app\
+echo Copying reviewers file...
+IF EXIST reviewers_master.xlsx (
+    copy reviewers_master.xlsx dist\app\
+) ELSE (
+    echo ERROR: reviewers_master.xlsx NOT FOUND!
+)
 
 echo =========================
 echo DONE SUCCESSFULLY ✅
