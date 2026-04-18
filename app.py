@@ -100,6 +100,17 @@ def format_excel(file_path):
 
 # ====== وظائف ======
 
+def count_issue_records(journal, issue_value):
+    file_path = JOURNAL_FILES[journal]
+
+    if not os.path.exists(file_path):
+        return 0
+
+    df = pd.read_excel(file_path, dtype=str)
+
+    return len(df[df["ISSUE"] == issue_value])
+
+
 def replace_placeholders(doc, mapping):
     for p in doc.paragraphs:
         for key, value in mapping.items():
@@ -498,6 +509,9 @@ class App(QWidget):
         layout.addWidget(QLabel("العدد"))
         layout.addLayout(issue_layout)
         
+        self.issue_count_label = QLabel("عدد الأبحاث: 0 / 35")
+        layout.addWidget(self.issue_count_label)
+        
         
        # ===== المحكمين =====
         reviewers_list = load_reviewers()
@@ -526,6 +540,12 @@ class App(QWidget):
 
         layout.addWidget(btn_generate)
         layout.addWidget(btn_search)
+        
+        self.issue.currentIndexChanged.connect(self.update_issue_count)
+        self.issue_year.currentIndexChanged.connect(self.update_issue_count)
+        self.journal.currentIndexChanged.connect(self.update_issue_count)
+        
+        self.update_issue_count()
 
         self.setLayout(layout)
 
@@ -534,6 +554,20 @@ class App(QWidget):
         self.day.setCurrentText(str(today.day))
         self.month.setCurrentText(MONTHS[today.month - 1])
         self.year.setCurrentText(str(today.year))
+        
+    def update_issue_count(self):
+        journal = self.journal.currentText()
+        issue_full = f"{self.issue.currentText()} {self.issue_year.currentText()}"
+
+        count = count_issue_records(journal, issue_full)
+
+        self.issue_count_label.setText(f"عدد الأبحاث في هذا العدد: {count} / 35")
+
+        # تحسين اللون
+        if count >= 35:
+            self.issue_count_label.setStyleSheet("color: red; font-weight: bold;")
+        else:
+            self.issue_count_label.setStyleSheet("color: green;")
 
     def submit(self):
         journal = self.journal.currentText()
@@ -557,6 +591,16 @@ class App(QWidget):
 
         accept_date = f"{day}/{month}/{year}"
         issue_full = f"{self.issue.currentText()} {self.issue_year.currentText()}"
+        
+        count = count_issue_records(journal, issue_full)
+
+        if count >= 35:
+            QMessageBox.warning(
+                self,
+                "تنبيه",
+                f"تم الوصول للحد الأقصى (35 بحث)\nعدد الأبحاث الحالي: {count}"
+            )
+            return
 
         excel_data = {
             "SERIAL": serial,
@@ -579,6 +623,7 @@ class App(QWidget):
 
         save_to_excel(journal, excel_data)
         generate_doc(doc_data)
+        self.update_issue_count()
 
         QMessageBox.information(self, "تم", f"تم إنشاء الخطاب برقم {serial}")
 
