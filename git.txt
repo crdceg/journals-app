@@ -1,0 +1,28 @@
+
+---
+
+# 🚀 4️⃣ رفع المشروع على GitHub
+
+## 🟢 الطريقة السهلة
+
+### 1. افتح:
+👉 https://github.com
+
+### 2. اضغط:
+👉 New Repository
+
+### 3. اكتب:
+- Name: `journals-app`
+- Public أو Private
+
+---
+
+### 4. بعد ما يتعمل
+
+
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/crdceg/journals-app.git
+git push -u origin main

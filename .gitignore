@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Build files
+build/
+dist/
+*.spec
+
+# Runtime data
+databases/
+output/
+
+# OS
+.DS_Store
+Thumbs.db
