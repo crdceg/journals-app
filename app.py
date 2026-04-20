@@ -354,6 +354,22 @@ class SearchWindow(QWidget):
 
         layout.addWidget(QLabel("المجلة"))
         layout.addWidget(self.journal)
+        
+        # ===== فلتر العدد =====
+        self.issue_filter = QComboBox()
+        self.issue_filter.addItem("الكل")
+        self.issue_filter.addItems(ISSUES)
+
+        self.issue_year_filter = QComboBox()
+        self.issue_year_filter.addItem("الكل")
+        self.issue_year_filter.addItems([str(y) for y in range(2025, 2031)])
+
+        layout.addWidget(QLabel("تصفية حسب العدد"))
+        issue_filter_layout = QHBoxLayout()
+        issue_filter_layout.addWidget(self.issue_filter)
+        issue_filter_layout.addWidget(self.issue_year_filter)
+
+        layout.addLayout(issue_filter_layout)
 
         # ===== البحث =====
         self.search_input = QLineEdit()
@@ -380,6 +396,11 @@ class SearchWindow(QWidget):
 
         layout.addWidget(edit_btn)
         layout.addWidget(delete_btn)
+        
+        export_btn = QPushButton("تصدير Excel")
+        export_btn.clicked.connect(self.export_excel)
+
+        layout.addWidget(export_btn)
 
         self.setLayout(layout)
 
@@ -392,6 +413,14 @@ class SearchWindow(QWidget):
             return
 
         df = pd.read_excel(file_path, dtype=str)
+        
+        # ===== فلتر العدد =====
+        issue = self.issue_filter.currentText()
+        issue_year = self.issue_year_filter.currentText()
+
+        if issue != "الكل" and issue_year != "الكل":
+            issue_full = f"{issue} {issue_year}"
+            df = df[df["ISSUE"] == issue_full]
 
         keyword = self.search_input.text().strip().lower()
 
@@ -439,6 +468,19 @@ class SearchWindow(QWidget):
         format_excel(self.file_path)
 
         QMessageBox.information(self, "تم", "تم الحذف")
+        
+    def export_excel(self):
+        if not hasattr(self, "data") or self.data.empty:
+            QMessageBox.warning(self, "خطأ", "لا توجد بيانات للتصدير")
+            return
+
+        file_name = f"{self.journal.currentText()}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        file_path = os.path.join("output", file_name)
+
+        self.data.to_excel(file_path, index=False)
+
+        QMessageBox.information(self, "تم", f"تم التصدير:\n{file_path}")
+        
         self.search()
 
 # ====== الشاشة الرئيسية ======

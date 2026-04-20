@@ -33,3 +33,10 @@ git push -u origin main
 git add .
 git commit -m "وصف التعديل"
 git push
+
+
+### 5.  للرجوع لأي تعديل 
+
+git reset --hard HEAD            commit رجوع لآخر 
+git reset --hard origin/main     GitHub رجوع لآخر 
+git checkout                   تشوف القديم بس 
