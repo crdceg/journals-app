@@ -284,21 +284,25 @@ class EditForm(QWidget):
         layout.addWidget(QLabel("المحكم الثاني"))
         layout.addWidget(self.reviewer2)
 
-        # ===== زر الحفظ =====
-        save_btn = QPushButton("حفظ + إعادة إصدار")
-        save_btn.clicked.connect(self.save)
+        # ===== أزرار الحفظ =====
+        btn_save_only = QPushButton("حفظ فقط")
+        btn_save_only.clicked.connect(self.save_only)
 
-        layout.addWidget(save_btn)
+        btn_save_generate = QPushButton("حفظ + إعادة إصدار")
+        btn_save_generate.clicked.connect(self.save_and_generate)
+
+        layout.addWidget(btn_save_only)
+        layout.addWidget(btn_save_generate)
 
         self.setLayout(layout)
-
-    def save(self):
+        
+    def save_data(self):
         name = self.name.text().strip()
         title = self.title.toPlainText().strip()
 
         if not name or not title:
             QMessageBox.warning(self, "خطأ", "اكمل البيانات")
-            return
+            return None
 
         day = self.day.currentText().zfill(2)
         month_index = MONTHS.index(self.month.currentText()) + 1
@@ -322,20 +326,41 @@ class EditForm(QWidget):
         df.to_excel(self.file_path, index=False)
         format_excel(self.file_path)
 
+        return {
+            "serial": serial,
+            "name": name,
+            "title": title,
+            "accept_date": accept_date,
+            "issue_full": issue_full
+        }    
+
+    def save_only(self):
+        result = self.save_data()
+
+        if result:
+            QMessageBox.information(self, "تم", "تم الحفظ بدون إعادة إصدار")
+            self.close()
+            
+    def save_and_generate(self):
+        result = self.save_data()
+
+        if not result:
+            return
+
         doc_data = {
-            "{{SERIAL}}": serial,
-            "{{NAME}}": name,
+            "{{SERIAL}}": result["serial"],
+            "{{NAME}}": result["name"],
             "{{JOURNAL}}": self.record["JOURNAL"],
-            "{{TITLE}}": title,
-            "{{ACCEPT_DATE}}": accept_date,
-            "{{ISSUE}}": issue_full,
+            "{{TITLE}}": result["title"],
+            "{{ACCEPT_DATE}}": result["accept_date"],
+            "{{ISSUE}}": result["issue_full"],
         }
 
         generate_doc(doc_data)
 
         QMessageBox.information(self, "تم", "تم التعديل وإعادة إصدار الخطاب")
-        self.close()
-        
+        self.close()        
+            
 # ====== شاشة البحث ======
 
 class SearchWindow(QWidget):
