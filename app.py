@@ -499,7 +499,19 @@ class SearchWindow(QWidget):
             QMessageBox.warning(self, "خطأ", "لا توجد بيانات للتصدير")
             return
 
-        file_name = f"{self.journal.currentText()}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        journal = self.journal.currentText()
+        issue = self.issue_filter.currentText()
+        year = self.issue_year_filter.currentText()
+
+        # تنظيف الاسم (منع مشاكل المسافات)
+        journal = journal.replace(" ", "_")
+
+        if issue != "الكل" and year != "الكل":
+            file_name = f"{journal}_{issue}_{year}.xlsx"
+        else:
+            file_name = f"{journal}_all.xlsx"
+        
+        
         file_path = os.path.join("output", file_name)
 
         self.data.to_excel(file_path, index=False)
@@ -514,7 +526,7 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("نظام خطابات القبول")
+        self.setWindowTitle("JOURNALS-APP")
         self.resize(900, 700)
         self.setMinimumSize(800, 600)
         self.setLayoutDirection(Qt.RightToLeft)
