@@ -629,8 +629,8 @@ class App(QWidget):
 
         self.name.clear()
         self.title.clear()
-        self.reviewer1.clear()
-        self.reviewer2.clear()
+        self.reviewer1.setCurrentIndex(0)
+        self.reviewer2.setCurrentIndex(0)
 
     def open_search(self):
         self.search_window = SearchWindow()
